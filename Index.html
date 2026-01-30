@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xclients by yt: StupidAssHell</title>
+    <!-- Material Design Dark Theme -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: #121212 !important;
+            color: #ffffff !important;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
+        .card { 
+            border-radius: 12px; 
+            overflow: hidden; 
+            transition: transform 0.3s, box-shadow 0.3s;
+            background: #1e1e1e !important;
+            border: 1px solid #333;
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
+        }
+        .client-image { 
+            height: 180px; 
+            object-fit: contain; 
+            background: #2d2d2d;
+            padding: 10px;
+        }
+        .download-btn { width: 100%; font-weight: bold; }
+        .loader {
+            text-align: center;
+            padding: 50px;
+        }
+        .error-message {
+            background: #d32f2f;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .title-container {
+            background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 40px;
+            border: 1px solid #333;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .main-title {
+            background: linear-gradient(90deg, #ff4081 0%, #bb86fc 50%, #03dac6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(187, 134, 252, 0.3);
+        }
+        .subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+        .youtube-icon {
+            color: #ff0000;
+            font-size: 1.5rem;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2rem;
+            }
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <v-app dark>
+            <div class="container">
+                <!-- Заголовок -->
+                <div class="title-container">
+                    <div class="header">
+                        <h1 class="main-title">
+                            <v-icon large color="#ff4081">mdi-account-circle</v-icon>
+                            Xclients by yt: <span style="color: #ff4081;">StupidAssHell</span>
+                        </h1>
+                        <p class="subtitle">
+                            <v-icon class="youtube-icon">mdi-youtube</v-icon>
+                            Выберите и скачайте нужный клиент
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Сообщение об ошибке -->
+                <v-alert v-if="error" type="error" class="error-message">
+                    {{ error }}
+                </v-alert>
+
+                <!-- Загрузка -->
+                <div v-if="loading" class="loader">
+                    <v-progress-circular
+                        indeterminate
+                        color="#bb86fc"
+                        size="64"
+                    ></v-progress-circular>
+                    <p style="margin-top: 20px; color: #aaa;">Загрузка списка клиентов...</p>
+                </div>
+
+                <!-- Список клиентов -->
+                <v-row v-else>
+                    <v-col 
+                        v-for="client in clients" 
+                        :key="client.name" 
+                        cols="12" 
+                        sm="6" 
+                        md="4" 
+                        lg="3"
+                    >
+                        <v-card class="card" elevation="0">
+                            <!-- Изображение -->
+                            <v-img 
+                                :src="client.imageUrl" 
+                                class="client-image" 
+                                :alt="client.name + ' preview'"
+                                @error="client.imageUrl = 'https://via.placeholder.com/300x180/2d2d2d/bb86fc?text=No+Preview'"
+                            >
+                                <template v-slot:placeholder>
+                                    <v-row class="fill-height ma-0" align="center" justify="center">
+                                        <v-progress-circular indeterminate color="grey lighten-5"></v-progress-circular>
+                                    </v-row>
+                                </template>
+                            </v-img>
+
+                            <!-- Информация -->
+                            <v-card-title style="font-weight: 500; color: #ffffff; word-break: break-word;">
+                                {{ formatName(client.name) }}
+                            </v-card-title>
+                            
+                            <v-card-subtitle style="color: #aaa;">
+                                <v-icon small color="#4caf50">mdi-package</v-icon>
+                                JAR файл
+                                <br>
+                                <span v-if="client.size">
+                                    <v-icon small color="#2196f3">mdi-harddisk</v-icon>
+                                    {{ client.size }}
+                                </span>
+                                <span v-else>
+                                    <v-icon small color="#ff9800">mdi-alert-circle</v-icon>
+                                    Размер неизвестен
+                                </span>
+                            </v-card-subtitle>
+
+                            <!-- Кнопка скачивания -->
+                            <v-card-actions>
+                                <v-btn 
+                                    :href="client.downloadUrl" 
+                                    color="#bb86fc" 
+                                    class="download-btn" 
+                                    large 
+                                    target="_blank" 
+                                    download
+                                    :disabled="client.isBroken"
+                                    :style="client.isBroken ? '' : 'background: linear-gradient(90deg, #bb86fc 0%, #3700b3 100%) !important;'"
+                                >
+                                    <v-icon left>mdi-download</v-icon>
+                                    {{ client.isBroken ? 'Файл недоступен' : 'Скачать' }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <!-- Если клиентов нет -->
+                <div v-if="!loading && clients.length === 0" style="text-align: center; padding: 60px;">
+                    <v-icon size="80" color="#666">mdi-package-variant-remove</v-icon>
+                    <h3 style="margin-top: 20px; color: #aaa;">Клиенты не найдены</h3>
+                    <p style="color: #777;">Проверьте подключение или структуру репозитория</p>
+                </div>
+
+                <!-- Футер -->
+                <v-footer style="background: transparent; margin-top: 50px; border-top: 1px solid #333; padding: 20px 0;">
+                    <v-container>
+                        <v-row align="center" justify="center">
+                            <v-col cols="12" class="text-center">
+                                <p style="color: #777; font-size: 0.9rem;">
+                                    <v-icon small color="#777">mdi-update</v-icon>
+                                    Автоматическое обновление при изменениях в репозитории
+                                </p>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-footer>
+            </div>
+        </v-app>
+    </div>
+
+    <!-- Vue.js + Vuetify -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            vuetify: new Vuetify({
+                theme: {
+                    dark: true,
+                    themes: {
+                        dark: {
+                            primary: '#bb86fc',
+                            secondary: '#03dac6',
+                            accent: '#3700b3',
+                            error: '#cf6679'
+                        }
+                    }
+                }
+            }),
+            data() {
+                return {
+                    clients: [],
+                    loading: true,
+                    error: null
+                }
+            },
+            async mounted() {
+                await this.fetchClientsFromGitHub();
+            },
+            methods: {
+                formatName(name) {
+                    // Преобразует "AquaClient" в "Aqua Client"
+                    return name.replace(/([a-z])([A-Z])/g, '$1 $2');
+                },
+                
+                async getFileSize(url) {
+                    try {
+                        const response = await fetch(url, { method: 'HEAD' });
+                        const size = response.headers.get('content-length');
+                        if (size) {
+                            const sizeMB = (size / (1024 * 1024)).toFixed(1);
+                            return `${sizeMB} MB`;
+                        }
+                        return null;
+                    } catch {
+                        return null;
+                    }
+                },
+                
+                async checkFileExists(url) {
+                    try {
+                        const response = await fetch(url, { method: 'HEAD' });
+                        return response.ok;
+                    } catch {
+                        return false;
+                    }
+                },
+                
+                async fetchClientsFromGitHub() {
+                    try {
+                        this.loading = true;
+                        this.error = null;
+                        
+                        // Загружаем список файлов из папки images
+                        const imagesResponse = await fetch('https://api.github.com/repos/noasd-tech/XClients/contents/images');
+                        
+                        if (!imagesResponse.ok) {
+                            throw new Error('Не удалось загрузить список изображений');
+                        }
+                        
+                        const imagesData = await imagesResponse.json();
+                        
+                        // Фильтруем только PNG файлы
+                        const pngFiles = imagesData.filter(file => 
+                            file.name.toLowerCase().endsWith('.png') && 
+                            file.type === 'file'
+                        );
+                        
+                        // Для каждого PNG создаем клиента
+                        const clients = [];
+                        
+                        for (const pngFile of pngFiles) {
+                            const baseName = pngFile.name.replace('.png', '').replace('.PNG', '');
+                            const jarUrl = `https://raw.githubusercontent.com/noasd-tech/XClients/main/jars/${baseName}.jar`;
+                            const imageUrl = `https://raw.githubusercontent.com/noasd-tech/XClients/main/images/${pngFile.name}`;
+                            
+                            // Проверяем, существует ли JAR файл
+                            const jarExists = await this.checkFileExists(jarUrl);
+                            
+                            // Получаем размер файла, если он существует
+                            let fileSize = null;
+                            if (jarExists) {
+                                fileSize = await this.getFileSize(jarUrl);
+                            }
+                            
+                            clients.push({
+                                name: baseName,
+                                imageUrl: imageUrl,
+                                downloadUrl: jarExists ? jarUrl : '#',
+                                size: fileSize,
+                                isBroken: !jarExists,
+                                isNew: true
+                            });
+                        }
+                        
+                        this.clients = clients;
+                        
+                    } catch (err) {
+                        console.error('Ошибка загрузки:', err);
+                        this.error = `Ошибка загрузки данных: ${err.message}. Проверьте подключение или структуру репозитория.`;
+                        
+                        // Показываем тестовые данные при ошибке
+                        this.clients = [
+                            {
+                                name: 'AquaClient',
+                                imageUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/images/AquaClient.png',
+                                downloadUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/jars/AquaClient.jar',
+                                size: '4.2 MB',
+                                isBroken: false,
+                                isNew: true
+                            },
+                            {
+                                name: 'SigmaClient',
+                                imageUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/images/SigmaClient.png',
+                                downloadUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/jars/SigmaClient.jar',
+                                size: '3.8 MB',
+                                isBroken: false,
+                                isNew: true
+                            },
+                            {
+                                name: 'RiseClient',
+                                imageUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/images/RiseClient.png',
+                                downloadUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/jars/RiseClient.jar',
+                                size: '5.1 MB',
+                                isBroken: false,
+                                isNew: true
+                            },
+                            {
+                                name: 'NovolineClient',
+                                imageUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/images/NovolineClient.png',
+                                downloadUrl: 'https://raw.githubusercontent.com/noasd-tech/XClients/main/jars/NovolineClient.jar',
+                                size: '6.3 MB',
+                                isBroken: false,
+                                isNew: false
+                            }
+                        ];
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
